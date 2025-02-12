@@ -183,7 +183,7 @@ class FeedbackService {
             switch (sound) {
               case GameObjectSound.mouse:
                 duration = 40;
-                if (hasAmplitudeControl) amplitude = 200;
+                if (hasAmplitudeControl) amplitude = 255;  
                 break;
               case GameObjectSound.bug:
                 duration = 60;
@@ -195,13 +195,13 @@ class FeedbackService {
                 break;
               case GameObjectSound.feather:
                 duration = 50;
-                if (hasAmplitudeControl) amplitude = 128;
+                if (hasAmplitudeControl) amplitude = 255;  
                 break;
               case GameObjectSound.yarnBall:
                 // For yarn ball, use simpler vibration when bouncing rapidly
                 if (timeSinceLastPlay < 500) {  // If bouncing very fast
                   duration = 40;
-                  if (hasAmplitudeControl) amplitude = 200;
+                  if (hasAmplitudeControl) amplitude = 255;  
                   await Vibration.vibrate(duration: duration, amplitude: amplitude);
                   return;
                 }
@@ -214,12 +214,12 @@ class FeedbackService {
                 if (isBounce) {
                   await Vibration.vibrate(
                     pattern: [0, 80, 50, 60, 50, 40],
-                    intensities: hasAmplitudeControl ? [255, 200, 150] : [],
+                    intensities: hasAmplitudeControl ? [255, 255, 200] : [],  
                   );
                 } else {
                   await Vibration.vibrate(
                     pattern: [0, 60, 40, 40],
-                    intensities: hasAmplitudeControl ? [255, 200] : [],
+                    intensities: hasAmplitudeControl ? [255, 255] : [],  
                   );
                 }
                 print('Yarn ball vibration pattern completed');

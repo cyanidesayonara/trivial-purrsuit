@@ -204,9 +204,11 @@ class GameObject {
         y = random.nextDouble() * 300.0;
         break;
       case GameObjectType.feather:
-        // Feather gets a bigger upward boost when tapped
-        speedY = -8.0;  // Much bigger upward boost
-        speedX = (random.nextDouble() - 0.5) * 6.0;  // More sideways movement too
+        // Feather gets caught in a strong upward gust when tapped
+        speedY = -15.0 - random.nextDouble() * 5.0;  // Base upward boost of 15-20
+        speedX = (random.nextDouble() - 0.5) * 8.0;  // More sideways movement
+        // Add some spin effect with varying vertical speed
+        _angle = random.nextDouble() * pi * 2;  // Random starting angle
         break;
       case GameObjectType.yarnBall:
         // Yarn ball bounces back up with spin
