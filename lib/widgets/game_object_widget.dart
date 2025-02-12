@@ -16,13 +16,13 @@ class GameObjectWidget extends StatelessWidget {
     if (!gameObject.isActive) return const SizedBox.shrink();
 
     return Positioned(
-      left: gameObject.position.dx,
-      top: gameObject.position.dy,
+      left: gameObject.x,
+      top: gameObject.y,
       child: GestureDetector(
         onTapDown: (_) => onTap(),
         child: CustomPaint(
           painter: gameObject.painter,
-          size: Size(gameObject.size, gameObject.size),
+          size: const Size(50, 50),
         ),
       ),
     );
