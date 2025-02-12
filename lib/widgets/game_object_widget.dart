@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/game_object.dart';
+import '../models/game_types.dart';
 
 class GameObjectWidget extends StatelessWidget {
   final GameObject gameObject;

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/game_object.dart';
 import '../widgets/game_object_widget.dart';
+import '../services/feedback_service.dart';
+import '../models/game_types.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -12,7 +14,7 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   final List<GameObject> gameObjects = [];
   Timer? gameTimer;
   Timer? spawnTimer;
@@ -20,46 +22,80 @@ class _GameScreenState extends State<GameScreen> {
   final random = Random();
   Size? screenSize;
   static const maxObjects = 2; // Limit to 2 objects at a time
+  final FeedbackService _feedback = FeedbackService();
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Force landscape mode
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    // We'll start the game when we have the screen size
+    WidgetsBinding.instance.addObserver(this);
+    // Wait for the first frame to be rendered before initializing
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      startGame();
+      _initializeGame();
     });
   }
 
-  @override
-  void dispose() {
-    gameTimer?.cancel();
-    spawnTimer?.cancel();
-    // Reset orientation settings
-    SystemChrome.setPreferredOrientations([]);
-    super.dispose();
+  Future<void> _initializeGame() async {
+    if (_isInitialized) return;
+
+    try {
+      // Get screen size first
+      screenSize = MediaQuery.of(context).size;
+      if (screenSize == null) {
+        print('Screen size not available yet');
+        return;
+      }
+
+      // Initialize feedback service
+      await _feedback.initialize();
+
+      // Force landscape mode
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+        startGame();
+      }
+    } catch (e) {
+      print('Failed to initialize game: $e');
+    }
   }
 
   void startGame() {
-    screenSize = MediaQuery.of(context).size;
+    if (!_isInitialized) {
+      print('Game not initialized yet');
+      return;
+    }
+
+    // Clear any existing objects and timers
+    gameObjects.clear();
+    gameTimer?.cancel();
+    spawnTimer?.cancel();
+
     // Add initial game object
     addRandomGameObject();
 
     // Start game loop
-    gameTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
-      updateGameObjects();
-    });
+    const fps = 60;
+    gameTimer = Timer.periodic(
+      const Duration(milliseconds: 1000 ~/ fps),
+      (_) => updateGameObjects(),
+    );
 
-    // Add new objects periodically
-    spawnTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (gameObjects.length < maxObjects) {
-        addRandomGameObject();
-      }
-    });
+    // Start spawning objects
+    spawnTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) {
+        if (gameObjects.length < maxObjects) {
+          addRandomGameObject();
+        }
+      },
+    );
   }
 
   void addRandomGameObject() {
@@ -139,11 +175,40 @@ class _GameScreenState extends State<GameScreen> {
     object.onTouch();
     setState(() {
       score += 10;
+      // Play appropriate feedback for the object type
+      switch (object.type) {
+        case GameObjectType.mouse:
+          _feedback.playFeedback(GameObjectSound.mouse);
+          break;
+        case GameObjectType.bug:
+          _feedback.playFeedback(GameObjectSound.bug);
+          break;
+        case GameObjectType.laserDot:
+          _feedback.playFeedback(GameObjectSound.laser);
+          break;
+        case GameObjectType.feather:
+          _feedback.playFeedback(GameObjectSound.feather);
+          break;
+        case GameObjectType.yarnBall:
+          _feedback.playFeedback(GameObjectSound.yarnBall);
+          break;
+      }
       // Spawn a new object immediately if we're under the limit and the tapped object was a bug (since it disappears)
       if (object.type == GameObjectType.bug && gameObjects.length < maxObjects) {
         addRandomGameObject();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    gameTimer?.cancel();
+    spawnTimer?.cancel();
+    _feedback.dispose();
+    // Reset orientation settings
+    SystemChrome.setPreferredOrientations([]);
+    super.dispose();
   }
 
   @override
@@ -158,6 +223,18 @@ class _GameScreenState extends State<GameScreen> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
+            if (!_isInitialized)
+              const Center(
+                child: CircularProgressIndicator(),
+              )
+            else
+              ...gameObjects.map((gameObject) {
+                return GameObjectWidget(
+                  key: ValueKey(gameObject.hashCode),
+                  gameObject: gameObject,
+                  onTap: () => onObjectTap(gameObject),
+                );
+              }).toList(),
             // Score display
             Positioned(
               top: 20,
@@ -171,11 +248,6 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
             ),
-            // Game objects
-            ...gameObjects.map((object) => GameObjectWidget(
-                  gameObject: object,
-                  onTap: () => onObjectTap(object),
-                )),
           ],
         ),
       ),
