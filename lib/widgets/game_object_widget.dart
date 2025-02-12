@@ -1,58 +1,45 @@
 import 'package:flutter/material.dart';
 import '../models/game_object.dart';
+import '../models/game_types.dart';
 
 class GameObjectWidget extends StatelessWidget {
   final GameObject gameObject;
-  final VoidCallback onTap;
+  final Function onTap;
 
   const GameObjectWidget({
-    super.key,
+    Key? key,
     required this.gameObject,
     required this.onTap,
-  });
+  }) : super(key: key);
+
+  Size _getObjectSize() {
+    switch (gameObject.type) {
+      case GameObjectType.mouse:
+      case GameObjectType.bug:
+      case GameObjectType.feather:
+        return const Size(100, 100); // Twice as big
+      case GameObjectType.laserDot:
+        return const Size(25, 25); // Half size
+      case GameObjectType.yarnBall:
+        return const Size(50, 50); // Original size
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (!gameObject.isActive) return const SizedBox.shrink();
 
+    final size = _getObjectSize();
     return Positioned(
-      left: gameObject.position.dx,
-      top: gameObject.position.dy,
+      left: gameObject.x,
+      top: gameObject.y,
       child: GestureDetector(
         onTapDown: (_) => onTap(),
-        child: Container(
-          width: gameObject.size,
-          height: gameObject.size,
-          decoration: BoxDecoration(
-            color: _getColor(),
-            shape: _getShape(),
-          ),
+        child: CustomPaint(
+          painter: gameObject.painter,
+          size: size,
         ),
       ),
     );
-  }
-
-  Color _getColor() {
-    switch (gameObject.type) {
-      case GameObjectType.mouse:
-        return Colors.grey;
-      case GameObjectType.bug:
-        return Colors.brown;
-      case GameObjectType.laserDot:
-        return Colors.red;
-      case GameObjectType.feather:
-        return Colors.orange;
-      case GameObjectType.yarnBall:
-        return Colors.blue;
-    }
-  }
-
-  BoxShape _getShape() {
-    switch (gameObject.type) {
-      case GameObjectType.laserDot:
-        return BoxShape.circle;
-      default:
-        return BoxShape.rectangle;
-    }
   }
 }
