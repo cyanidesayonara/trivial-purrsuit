@@ -66,8 +66,25 @@ class _GameScreenState extends State<GameScreen> {
     if (screenSize == null) return;
 
     final type = GameObjectType.values[random.nextInt(GameObjectType.values.length)];
-    final x = random.nextDouble() * (screenSize!.width - 50);
-    final y = random.nextDouble() * (screenSize!.height - 50);
+    
+    // Get the object size to properly calculate boundaries
+    double objectSize;
+    switch (type) {
+      case GameObjectType.mouse:
+      case GameObjectType.bug:
+      case GameObjectType.feather:
+        objectSize = 100;
+        break;
+      case GameObjectType.laserDot:
+        objectSize = 25;
+        break;
+      case GameObjectType.yarnBall:
+        objectSize = 50;
+        break;
+    }
+
+    final x = random.nextDouble() * (screenSize!.width - objectSize);
+    final y = random.nextDouble() * (screenSize!.height - objectSize);
     final speedX = (random.nextDouble() - 0.5) * 5;
     final speedY = (random.nextDouble() - 0.5) * 5;
 
@@ -89,7 +106,22 @@ class _GameScreenState extends State<GameScreen> {
 
     setState(() {
       for (final object in gameObjects) {
-        object.move(screenSize!.width - 50, screenSize!.height - 50);
+        // Get the object size for boundary checking
+        double objectSize;
+        switch (object.type) {
+          case GameObjectType.mouse:
+          case GameObjectType.bug:
+          case GameObjectType.feather:
+            objectSize = 100;
+            break;
+          case GameObjectType.laserDot:
+            objectSize = 25;
+            break;
+          case GameObjectType.yarnBall:
+            objectSize = 50;
+            break;
+        }
+        object.move(screenSize!.width - objectSize, screenSize!.height - objectSize);
       }
       gameObjects.removeWhere((object) => !object.isActive);
     });
@@ -99,8 +131,8 @@ class _GameScreenState extends State<GameScreen> {
     object.onTouch();
     setState(() {
       score += 10;
-      // Spawn a new object immediately if we're under the limit
-      if (gameObjects.length < maxObjects) {
+      // Spawn a new object immediately if we're under the limit and the tapped object was a bug (since it disappears)
+      if (object.type == GameObjectType.bug && gameObjects.length < maxObjects) {
         addRandomGameObject();
       }
     });
