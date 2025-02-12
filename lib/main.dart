@@ -4,11 +4,6 @@ import 'screens/game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Set preferred orientations to portrait only
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
   // Set full screen
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.immersive,

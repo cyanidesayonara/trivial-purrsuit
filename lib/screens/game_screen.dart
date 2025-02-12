@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/game_object.dart';
 import '../widgets/game_object_widget.dart';
 
@@ -18,10 +19,16 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   final random = Random();
   Size? screenSize;
+  static const maxObjects = 2; // Limit to 2 objects at a time
 
   @override
   void initState() {
     super.initState();
+    // Force landscape mode
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     // We'll start the game when we have the screen size
     WidgetsBinding.instance.addPostFrameCallback((_) {
       startGame();
@@ -32,12 +39,14 @@ class _GameScreenState extends State<GameScreen> {
   void dispose() {
     gameTimer?.cancel();
     spawnTimer?.cancel();
+    // Reset orientation settings
+    SystemChrome.setPreferredOrientations([]);
     super.dispose();
   }
 
   void startGame() {
     screenSize = MediaQuery.of(context).size;
-    // Add initial game objects
+    // Add initial game object
     addRandomGameObject();
 
     // Start game loop
@@ -47,7 +56,7 @@ class _GameScreenState extends State<GameScreen> {
 
     // Add new objects periodically
     spawnTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (gameObjects.length < 5) {
+      if (gameObjects.length < maxObjects) {
         addRandomGameObject();
       }
     });
@@ -90,34 +99,45 @@ class _GameScreenState extends State<GameScreen> {
     object.onTouch();
     setState(() {
       score += 10;
+      // Spawn a new object immediately if we're under the limit
+      if (gameObjects.length < maxObjects) {
+        addRandomGameObject();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Score display
-          Positioned(
-            top: 40,
-            right: 20,
-            child: Text(
-              'Score: $score',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+    return WillPopScope(
+      onWillPop: () async {
+        // Reset orientation before exiting
+        await SystemChrome.setPreferredOrientations([]);
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // Score display
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Text(
+                'Score: $score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          // Game objects
-          ...gameObjects.map((object) => GameObjectWidget(
-                gameObject: object,
-                onTap: () => onObjectTap(object),
-              )),
-        ],
+            // Game objects
+            ...gameObjects.map((object) => GameObjectWidget(
+                  gameObject: object,
+                  onTap: () => onObjectTap(object),
+                )),
+          ],
+        ),
       ),
     );
   }
