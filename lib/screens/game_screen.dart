@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/game_object.dart';
 import '../widgets/game_object_widget.dart';
 import '../services/feedback_service.dart';
@@ -235,35 +236,72 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         return true;
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            if (!_isInitialized)
-              const Center(
-                child: CircularProgressIndicator(),
-              )
-            else
-              ...gameObjects.map((gameObject) {
-                return GameObjectWidget(
-                  key: ValueKey(gameObject.hashCode),
-                  gameObject: gameObject,
-                  onTap: () => onObjectTap(gameObject),
-                );
-              }).toList(),
-            // Score display
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Text(
-                'Score: $score',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.2,
+              colors: [
+                const Color(0xFF1B4B6A), // Lighter blue in center
+                const Color(0xFF0A2436), // Darker blue at edges
+              ],
+              stops: const [0.0, 1.0],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Outer gold trim
+              Positioned.fill(
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37), // Classic gold color
+                      width: 1.5,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+              
+              // Inner gold trim
+              Positioned.fill(
+                child: Container(
+                  margin: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37), // Classic gold color
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Title
+              Center(
+                child: Text(
+                  'Trivial Purrsuit',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.greatVibes(
+                    fontSize: 80,
+                    color: const Color(0xFFD4AF37), // Classic gold color
+                    shadows: [
+                      const Shadow(
+                        color: Colors.black26,
+                        offset: Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Game objects
+              ...gameObjects.map((obj) => GameObjectWidget(
+                gameObject: obj,
+                onTap: () => onObjectTap(obj),
+              )),
+            ],
+          ),
         ),
       ),
     );
