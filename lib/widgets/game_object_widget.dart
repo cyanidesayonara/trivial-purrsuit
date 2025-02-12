@@ -20,11 +20,9 @@ class GameObjectWidget extends StatelessWidget {
       top: gameObject.position.dy,
       child: GestureDetector(
         onTapDown: (_) => onTap(),
-        child: Image.asset(
-          gameObject.imagePath,
-          width: gameObject.size,
-          height: gameObject.size,
-          fit: BoxFit.contain,
+        child: CustomPaint(
+          painter: gameObject.painter,
+          size: Size(gameObject.size, gameObject.size),
         ),
       ),
     );
