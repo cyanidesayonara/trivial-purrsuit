@@ -13,23 +13,30 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   final List<GameObject> gameObjects = [];
-  late Timer gameTimer;
+  Timer? gameTimer;
+  Timer? spawnTimer;
   int score = 0;
   final random = Random();
+  Size? screenSize;
 
   @override
   void initState() {
     super.initState();
-    startGame();
+    // We'll start the game when we have the screen size
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      startGame();
+    });
   }
 
   @override
   void dispose() {
-    gameTimer.cancel();
+    gameTimer?.cancel();
+    spawnTimer?.cancel();
     super.dispose();
   }
 
   void startGame() {
+    screenSize = MediaQuery.of(context).size;
     // Add initial game objects
     addRandomGameObject();
 
@@ -39,7 +46,7 @@ class _GameScreenState extends State<GameScreen> {
     });
 
     // Add new objects periodically
-    Timer.periodic(const Duration(seconds: 3), (timer) {
+    spawnTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (gameObjects.length < 5) {
         addRandomGameObject();
       }
@@ -47,12 +54,11 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void addRandomGameObject() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenSize == null) return;
 
     final type = GameObjectType.values[random.nextInt(GameObjectType.values.length)];
-    final x = random.nextDouble() * (screenWidth - 50);
-    final y = random.nextDouble() * (screenHeight - 50);
+    final x = random.nextDouble() * (screenSize!.width - 50);
+    final y = random.nextDouble() * (screenSize!.height - 50);
     final speedX = (random.nextDouble() - 0.5) * 5;
     final speedY = (random.nextDouble() - 0.5) * 5;
 
@@ -70,12 +76,11 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void updateGameObjects() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    if (screenSize == null) return;
 
     setState(() {
       for (final object in gameObjects) {
-        object.move(screenWidth - 50, screenHeight - 50);
+        object.move(screenSize!.width - 50, screenSize!.height - 50);
       }
       gameObjects.removeWhere((object) => !object.isActive);
     });
