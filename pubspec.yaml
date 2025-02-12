@@ -35,6 +35,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.2
+  vibration: ^1.8.4  # For haptic feedback
+  audioplayers: ^5.2.1  # For sound effects
 
 dev_dependencies:
   flutter_test:
@@ -77,3 +79,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  # Add assets section for sound effects
+  assets:
+    - assets/sounds/cat_toy.mp3
+    - assets/sounds/squish.mp3
+    - assets/sounds/beep.mp3
+    - assets/sounds/whoosh.mp3
+    - assets/sounds/bounce.mp3
