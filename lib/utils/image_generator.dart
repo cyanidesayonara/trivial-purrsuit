@@ -1,33 +1,74 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
+class GameObjectPainter extends CustomPainter {
+  final void Function(Canvas, Size) drawFunction;
+
+  GameObjectPainter(this.drawFunction);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    drawFunction(canvas, size);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class ImageGenerator {
   static Future<void> generatePlaceholderImages() async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
+    await _generateImage(_drawMouse, 'mouse.png');
+    await _generateImage(_drawLaserDot, 'laser_dot.png');
+    await _generateImage(_drawBug, 'bug.png');
+    await _generateImage(_drawFeather, 'feather.png');
+    await _generateImage(_drawYarnBall, 'yarn_ball.png');
+  }
+
+  static Future<void> _generateImage(
+    void Function(Canvas, Size) drawFunction,
+    String fileName,
+  ) async {
     const size = Size(100, 100);
+    
+    final repaintBoundary = RepaintBoundary(
+      child: CustomPaint(
+        size: size,
+        painter: GameObjectPainter(drawFunction),
+      ),
+    );
 
-    // Generate mouse
-    _drawMouse(canvas, size);
-    await _savePicture(recorder, size, 'mouse.png');
+    final pipelineOwner = PipelineOwner();
+    final buildOwner = BuildOwner(focusManager: FocusManager());
+    
+    final rootElement = RenderObjectToWidgetAdapter<RenderBox>(
+      container: RenderView(
+        configuration: ViewConfiguration(
+          size: size,
+          devicePixelRatio: 1.0,
+        ),
+        window: WidgetsBinding.instance.window,
+      ),
+      child: repaintBoundary,
+    ).attachToRenderTree(buildOwner);
+    
+    buildOwner.buildScope(rootElement);
+    buildOwner.finalizeTree();
+    
+    pipelineOwner.flushLayout();
+    pipelineOwner.flushCompositingBits();
+    pipelineOwner.flushPaint();
+    
+    final renderObject = rootElement.renderObject as RenderRepaintBoundary;
+    final image = await renderObject.toImage();
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final buffer = byteData!.buffer.asUint8List();
 
-    // Generate laser dot
-    _drawLaserDot(canvas, size);
-    await _savePicture(recorder, size, 'laser_dot.png');
-
-    // Generate bug
-    _drawBug(canvas, size);
-    await _savePicture(recorder, size, 'bug.png');
-
-    // Generate feather
-    _drawFeather(canvas, size);
-    await _savePicture(recorder, size, 'feather.png');
-
-    // Generate yarn ball
-    _drawYarnBall(canvas, size);
-    await _savePicture(recorder, size, 'yarn_ball.png');
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(buffer);
   }
 
   static void _drawMouse(Canvas canvas, Size size) {
@@ -196,27 +237,5 @@ class ImageGenerator {
       );
     }
     canvas.drawPath(path, paint);
-  }
-
-  static Future<void> _savePicture(
-    ui.PictureRecorder recorder,
-    Size size,
-    String fileName,
-  ) async {
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      size.width.toInt(),
-      size.height.toInt(),
-    );
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final buffer = byteData!.buffer.asUint8List();
-
-    final directory = Directory('assets/images');
-    if (!directory.existsSync()) {
-      directory.createSync(recursive: true);
-    }
-
-    final file = File('${directory.path}/$fileName');
-    await file.writeAsBytes(buffer);
   }
 }
