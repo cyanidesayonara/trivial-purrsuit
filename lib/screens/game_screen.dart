@@ -103,12 +103,19 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void addRandomGameObject() {
     if (screenSize == null) return;
 
-    // Get a random type that's different from the last one
+    // Get a random type that's not currently in play
     GameObjectType type;
-    do {
-      type = GameObjectType.values[random.nextInt(GameObjectType.values.length)];
-    } while (type == _lastSpawnedType && GameObjectType.values.length > 1);
-    
+    final existingTypes = gameObjects.map((obj) => obj.type).toSet();
+    final availableTypes = GameObjectType.values.toSet().difference(existingTypes);
+
+    if (availableTypes.isEmpty) {
+      print('No available unique types to spawn');
+      return;
+    }
+
+    // Convert to list for random selection
+    final typesList = availableTypes.toList();
+    type = typesList[random.nextInt(typesList.length)];
     _lastSpawnedType = type;  // Update the last spawned type
     
     // Get the object size to properly calculate boundaries
