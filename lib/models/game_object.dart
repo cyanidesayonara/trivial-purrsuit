@@ -118,14 +118,26 @@ class GameObject {
         x += speedX;
         y += speedY;
 
-        // Bounce off bottom with almost no energy loss
+        // Calculate speed before bounce for feedback
+        final speedBeforeBounce = speedY;
+
+        // Bounce off bottom with minimal energy loss
         if (y > maxY) {
           y = maxY;
-          speedY = -speedY * 0.95; // 5% energy loss on bounce
-          // Add a bit more horizontal movement on each bounce
-          speedX += (random.nextDouble() - 0.5) * 3.0;
-          // Play bounce feedback
-          _feedback.playFeedback(GameObjectSound.yarnBall, isBounce: true);
+          speedY = -speedY * 0.97; // Only 3% energy loss on bounce
+          
+          // Only play bounce feedback if it's a significant bounce
+          if (speedBeforeBounce > 8.0) {
+            _feedback.playFeedback(GameObjectSound.yarnBall, isBounce: true);
+          }
+          
+          // Gradually reduce horizontal speed when rolling
+          if (speedBeforeBounce < 8.0) {
+            speedX *= 0.98; // Gradual slowdown when rolling
+          } else {
+            // Add a bit more horizontal movement on bounces
+            speedX += (random.nextDouble() - 0.5) * 3.0;
+          }
         }
 
         // Bounce off walls with slight speed increase
