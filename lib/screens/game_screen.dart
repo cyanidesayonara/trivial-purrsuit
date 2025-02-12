@@ -83,10 +83,18 @@ class _GameScreenState extends State<GameScreen> {
         break;
     }
 
-    final x = random.nextDouble() * (screenSize!.width - objectSize);
-    final y = random.nextDouble() * (screenSize!.height - objectSize);
+    // For yarn ball, start at top of screen
+    double x, y;
+    if (type == GameObjectType.yarnBall) {
+      x = random.nextDouble() * (screenSize!.width - objectSize);
+      y = 0; // Start from top
+    } else {
+      x = random.nextDouble() * (screenSize!.width - objectSize);
+      y = random.nextDouble() * (screenSize!.height - objectSize);
+    }
+
     final speedX = (random.nextDouble() - 0.5) * 5;
-    final speedY = (random.nextDouble() - 0.5) * 5;
+    final speedY = type == GameObjectType.yarnBall ? 0.0 : (random.nextDouble() - 0.5) * 5; // Explicitly using 0.0 for double
 
     setState(() {
       gameObjects.add(
