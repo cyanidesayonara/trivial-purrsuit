@@ -92,8 +92,14 @@ class GameObject {
         break;
       case GameObjectType.feather:
         // Feather floats down with gentle swaying
-        speedX = sin(_angle) * 2.0; // Gentle side-to-side movement
-        speedY = 1.0 + cos(_angle) * 0.5; // Always moving down, but speed varies slightly
+        if (speedY > 0) {  // Only apply default movement if not rising from a tap
+          speedX = sin(_angle) * 2.0; // Gentle side-to-side movement
+          speedY = 1.0 + cos(_angle) * 0.5; // Always moving down, but speed varies slightly
+        } else {
+          // If rising from a tap, gradually slow down the upward movement
+          speedY += 0.2;  // Gravity effect
+          speedX = sin(_angle) * 4.0;  // Wider swaying when rising
+        }
         
         // Move
         x += speedX;
@@ -205,10 +211,9 @@ class GameObject {
         break;
       case GameObjectType.feather:
         // Feather gets caught in a strong upward gust when tapped
-        speedY = -15.0 - random.nextDouble() * 5.0;  // Base upward boost of 15-20
-        speedX = (random.nextDouble() - 0.5) * 8.0;  // More sideways movement
-        // Add some spin effect with varying vertical speed
-        _angle = random.nextDouble() * pi * 2;  // Random starting angle
+        speedY = -12.0;  // Strong upward boost
+        speedX = (random.nextDouble() - 0.5) * 8.0;  // Sideways movement
+        _angle = random.nextDouble() * pi * 2;  // Random starting angle for swaying
         break;
       case GameObjectType.yarnBall:
         // Yarn ball bounces back up with spin
