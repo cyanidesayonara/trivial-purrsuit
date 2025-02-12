@@ -58,9 +58,9 @@ class GameObject {
         speedY = -2;
         break;
       case GameObjectType.yarnBall:
-        // Yarn ball rolls with momentum
-        speedX = (random.nextDouble() - 0.5) * 10;
-        speedY = (random.nextDouble() - 0.5) * 10;
+        // Yarn ball starts with a high bounce
+        speedX = (random.nextDouble() - 0.5) * 5;
+        speedY = -35; // Higher initial jump
         break;
     }
   }
@@ -74,19 +74,19 @@ class GameObject {
       return;
     }
 
-    _angle += 0.1; // Used for various movement patterns
+    _angle += 0.1;
 
     switch (type) {
       case GameObjectType.mouse:
         // Mouse moves in quick bursts with pauses
-        if (random.nextDouble() < 0.05) { // 5% chance to change direction
+        if (random.nextDouble() < 0.05) {
           speedX = (random.nextDouble() - 0.5) * 15;
           speedY = (random.nextDouble() - 0.5) * 15;
         }
         break;
       case GameObjectType.laserDot:
         // Laser dot moves erratically with sudden direction changes
-        if (random.nextDouble() < 0.1) { // 10% chance to change direction
+        if (random.nextDouble() < 0.1) {
           speedX = (random.nextDouble() - 0.5) * 20;
           speedY = (random.nextDouble() - 0.5) * 20;
         }
@@ -98,18 +98,31 @@ class GameObject {
       case GameObjectType.feather:
         // Feather floats with gentle swaying
         speedX = sin(_angle) * 3;
-        speedY = cos(_angle) * 2 - 3; // Tendency to float upward
+        speedY = cos(_angle) * 2 - 3;
         break;
       case GameObjectType.yarnBall:
-        // Yarn ball rolls with momentum and slight bouncing
-        speedY += 0.5; // Gravity
-        if (y >= maxY) {
-          speedY = -speedY * 0.8; // Bounce with energy loss
+        // Apply gravity
+        speedY += 1.5;
+        
+        // Move
+        x += speedX;
+        y += speedY;
+
+        // Bounce off bottom with almost no energy loss
+        if (y > maxY) {
           y = maxY;
+          speedY = -35;  // Fixed bounce height
         }
-        break;
+
+        // Bounce off walls
+        if (x < 0 || x > maxX) {
+          speedX = -speedX;
+          x = x < 0 ? 0 : maxX;
+        }
+        return; // Skip the default movement code for yarn ball
     }
 
+    // Default movement for other objects
     x += speedX;
     y += speedY;
 
@@ -170,9 +183,9 @@ class GameObject {
         speedX = Random().nextDouble() * 4 - 2;
         break;
       case GameObjectType.yarnBall:
-        // Yarn ball rolls faster
-        speedX *= 1.5;
-        speedY *= 1.5;
+        // Yarn ball bounces back up with spin
+        speedY = -35;  // Same height as natural bounce
+        speedX = (random.nextDouble() - 0.5) * 10;
         break;
     }
   }
