@@ -3,13 +3,13 @@ import '../models/game_object.dart';
 
 class GameObjectWidget extends StatelessWidget {
   final GameObject gameObject;
-  final VoidCallback onTap;
+  final Function onTap;
 
   const GameObjectWidget({
-    super.key,
+    Key? key,
     required this.gameObject,
     required this.onTap,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,39 +20,13 @@ class GameObjectWidget extends StatelessWidget {
       top: gameObject.position.dy,
       child: GestureDetector(
         onTapDown: (_) => onTap(),
-        child: Container(
+        child: Image.asset(
+          gameObject.imagePath,
           width: gameObject.size,
           height: gameObject.size,
-          decoration: BoxDecoration(
-            color: _getColor(),
-            shape: _getShape(),
-          ),
+          fit: BoxFit.contain,
         ),
       ),
     );
-  }
-
-  Color _getColor() {
-    switch (gameObject.type) {
-      case GameObjectType.mouse:
-        return Colors.grey;
-      case GameObjectType.bug:
-        return Colors.brown;
-      case GameObjectType.laserDot:
-        return Colors.red;
-      case GameObjectType.feather:
-        return Colors.orange;
-      case GameObjectType.yarnBall:
-        return Colors.blue;
-    }
-  }
-
-  BoxShape _getShape() {
-    switch (gameObject.type) {
-      case GameObjectType.laserDot:
-        return BoxShape.circle;
-      default:
-        return BoxShape.rectangle;
-    }
   }
 }

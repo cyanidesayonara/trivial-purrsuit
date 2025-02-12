@@ -11,75 +11,79 @@ enum GameObjectType {
 
 class GameObject {
   final GameObjectType type;
-  Offset position;
-  Offset velocity;
+  double x;
+  double y;
+  double speedX;
+  double speedY;
   bool isActive;
-  final double size;
+
+  // Get the image path based on the object type
+  String get imagePath {
+    switch (type) {
+      case GameObjectType.mouse:
+        return 'assets/images/mouse.png';
+      case GameObjectType.bug:
+        return 'assets/images/bug.png';
+      case GameObjectType.laserDot:
+        return 'assets/images/laser_dot.png';
+      case GameObjectType.feather:
+        return 'assets/images/feather.png';
+      case GameObjectType.yarnBall:
+        return 'assets/images/yarn_ball.png';
+    }
+  }
 
   GameObject({
     required this.type,
-    required this.position,
-    Offset? velocity,
-    this.size = 50.0,
-  })  : velocity = velocity ?? _getRandomVelocity(),
-        isActive = true;
+    required this.x,
+    required this.y,
+    this.speedX = 0,
+    this.speedY = 0,
+    this.isActive = true,
+  });
 
-  static Offset _getRandomVelocity() {
-    final random = Random();
-    return Offset(
-      (random.nextDouble() - 0.5) * 5,
-      (random.nextDouble() - 0.5) * 5,
-    );
-  }
-
-  void update(Size screenSize) {
-    if (!isActive) return;
-
-    position += velocity;
+  void move(double screenWidth, double screenHeight) {
+    x += speedX;
+    y += speedY;
 
     // Bounce off screen edges
-    if (position.dx <= 0 || position.dx >= screenSize.width - size) {
-      velocity = Offset(-velocity.dx, velocity.dy);
+    if (x <= 0 || x >= screenWidth) {
+      speedX = -speedX;
+      x = x <= 0 ? 0 : screenWidth;
     }
-    if (position.dy <= 0 || position.dy >= screenSize.height - size) {
-      velocity = Offset(velocity.dx, -velocity.dy);
+    if (y <= 0 || y >= screenHeight) {
+      speedY = -speedY;
+      y = y <= 0 ? 0 : screenHeight;
     }
-
-    // Keep within bounds
-    position = Offset(
-      position.dx.clamp(0, screenSize.width - size),
-      position.dy.clamp(0, screenSize.height - size),
-    );
   }
 
-  void onTap() {
+  void onTouch() {
     switch (type) {
       case GameObjectType.mouse:
-        // Scurry away - increase speed and change direction
+        // Mouse scurries away in a random direction
         final random = Random();
-        velocity *= 2;
-        velocity = Offset(
-          velocity.dx + (random.nextDouble() - 0.5) * 10,
-          velocity.dy + (random.nextDouble() - 0.5) * 10,
-        );
+        speedX = (random.nextDouble() - 0.5) * 20;
+        speedY = (random.nextDouble() - 0.5) * 20;
         break;
       case GameObjectType.bug:
-        // Get squished
+        // Bug gets squished and disappears
         isActive = false;
         break;
       case GameObjectType.laserDot:
-        // Teleport to a random location
+        // Laser dot teleports to a random location
         final random = Random();
-        position = Offset(
-          random.nextDouble() * 300,
-          random.nextDouble() * 300,
-        );
+        x = random.nextDouble() * 300;
+        y = random.nextDouble() * 300;
         break;
       case GameObjectType.feather:
-        velocity = _getRandomVelocity();
+        // Feather floats away gently
+        speedY = -5;
+        speedX = Random().nextDouble() * 4 - 2;
         break;
       case GameObjectType.yarnBall:
-        // Roll - increase angular momentum (will be implemented in the widget)
+        // Yarn ball rolls faster
+        speedX *= 1.5;
+        speedY *= 1.5;
         break;
     }
   }
