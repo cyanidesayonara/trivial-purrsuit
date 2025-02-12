@@ -1,16 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-
-enum GameObjectType {
-  mouse,
-  laserDot,
-  bug,
-  feather,
-  yarnBall,
-}
+import '../services/feedback_service.dart';
+import 'game_types.dart';
 
 class GameObject {
-  final GameObjectType type;
+  GameObjectType type;
   double x;
   double y;
   double speedX;
@@ -19,7 +13,8 @@ class GameObject {
   DateTime createdAt;
   DateTime lastInteractionAt;
   static const maxLifetimeSeconds = 15.0;
-  
+  final FeedbackService _feedback = FeedbackService();
+
   // Movement pattern variables
   double _angle = 0.0;
   double _targetX = 0.0;
@@ -129,6 +124,8 @@ class GameObject {
           speedY = -speedY * 0.95; // 5% energy loss on bounce
           // Add a bit more horizontal movement on each bounce
           speedX += (random.nextDouble() - 0.5) * 3.0;
+          // Play bounce feedback
+          _feedback.playFeedback(GameObjectSound.yarnBall, isBounce: true);
         }
 
         // Bounce off walls with slight speed increase
