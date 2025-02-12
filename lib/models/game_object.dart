@@ -18,7 +18,13 @@ class GameObject {
   bool isActive;
   DateTime createdAt;
   DateTime lastInteractionAt;
-  static const maxLifetimeSeconds = 15; // Random between 10-20 seconds
+  static const maxLifetimeSeconds = 15;
+  
+  // Movement pattern variables
+  double _angle = 0;
+  double _targetX = 0;
+  double _targetY = 0;
+  final random = Random();
 
   GameObject({
     required this.type,
@@ -28,27 +34,113 @@ class GameObject {
     this.speedY = 0,
   }) : isActive = true,
        createdAt = DateTime.now(),
-       lastInteractionAt = DateTime.now();
+       lastInteractionAt = DateTime.now() {
+    // Initialize movement patterns
+    switch (type) {
+      case GameObjectType.mouse:
+        // Mouse moves in quick bursts with pauses
+        speedX = (random.nextDouble() - 0.5) * 15;
+        speedY = (random.nextDouble() - 0.5) * 15;
+        break;
+      case GameObjectType.laserDot:
+        // Laser dot moves erratically
+        speedX = (random.nextDouble() - 0.5) * 20;
+        speedY = (random.nextDouble() - 0.5) * 20;
+        break;
+      case GameObjectType.bug:
+        // Bug moves in a zigzag pattern
+        speedX = 8;
+        speedY = 4;
+        break;
+      case GameObjectType.feather:
+        // Feather floats gently
+        speedX = (random.nextDouble() - 0.5) * 3;
+        speedY = -2;
+        break;
+      case GameObjectType.yarnBall:
+        // Yarn ball rolls with momentum
+        speedX = (random.nextDouble() - 0.5) * 10;
+        speedY = (random.nextDouble() - 0.5) * 10;
+        break;
+    }
+  }
 
   void move(double maxX, double maxY) {
     // Check if object has expired
     final now = DateTime.now();
     final lifetime = now.difference(lastInteractionAt).inSeconds;
-    if (lifetime > maxLifetimeSeconds + Random().nextInt(10)) { // Adds 0-10 seconds randomly
+    if (lifetime > maxLifetimeSeconds + random.nextInt(10)) {
       isActive = false;
       return;
+    }
+
+    _angle += 0.1; // Used for various movement patterns
+
+    switch (type) {
+      case GameObjectType.mouse:
+        // Mouse moves in quick bursts with pauses
+        if (random.nextDouble() < 0.05) { // 5% chance to change direction
+          speedX = (random.nextDouble() - 0.5) * 15;
+          speedY = (random.nextDouble() - 0.5) * 15;
+        }
+        break;
+      case GameObjectType.laserDot:
+        // Laser dot moves erratically with sudden direction changes
+        if (random.nextDouble() < 0.1) { // 10% chance to change direction
+          speedX = (random.nextDouble() - 0.5) * 20;
+          speedY = (random.nextDouble() - 0.5) * 20;
+        }
+        break;
+      case GameObjectType.bug:
+        // Bug moves in a zigzag pattern
+        speedY = sin(_angle) * 8;
+        break;
+      case GameObjectType.feather:
+        // Feather floats with gentle swaying
+        speedX = sin(_angle) * 3;
+        speedY = cos(_angle) * 2 - 3; // Tendency to float upward
+        break;
+      case GameObjectType.yarnBall:
+        // Yarn ball rolls with momentum and slight bouncing
+        speedY += 0.5; // Gravity
+        if (y >= maxY) {
+          speedY = -speedY * 0.8; // Bounce with energy loss
+          y = maxY;
+        }
+        break;
     }
 
     x += speedX;
     y += speedY;
 
-    // Bounce off edges
+    // Bounce off edges with type-specific behavior
     if (x <= 0 || x >= maxX) {
-      speedX = -speedX;
+      switch (type) {
+        case GameObjectType.yarnBall:
+          speedX = -speedX * 0.8; // Yarn ball loses energy
+          break;
+        case GameObjectType.feather:
+          speedX = -speedX * 0.5; // Feather bounces softly
+          break;
+        default:
+          speedX = -speedX;
+          break;
+      }
       x = x <= 0 ? 0 : maxX;
     }
+
     if (y <= 0 || y >= maxY) {
-      speedY = -speedY;
+      switch (type) {
+        case GameObjectType.yarnBall:
+          speedY = -speedY * 0.8; // Yarn ball loses energy
+          break;
+        case GameObjectType.feather:
+          speedY = -speedY * 0.5; // Feather bounces softly
+          break;
+        default:
+          speedY = -speedY;
+          break;
+      }
       y = y <= 0 ? 0 : maxY;
     }
   }
