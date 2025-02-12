@@ -21,9 +21,8 @@ class GameObject {
     required this.position,
     Offset? velocity,
     this.size = 50.0,
-  }) : 
-    velocity = velocity ?? _getRandomVelocity(),
-    isActive = true;
+  })  : velocity = velocity ?? _getRandomVelocity(),
+        isActive = true;
 
   static Offset _getRandomVelocity() {
     final random = Random();
@@ -77,8 +76,6 @@ class GameObject {
         );
         break;
       case GameObjectType.feather:
-        // Flutter - change direction randomly
-        final random = Random();
         velocity = _getRandomVelocity();
         break;
       case GameObjectType.yarnBall:

@@ -106,3 +106,5 @@ app.*.map.json
 # Environment files
 .env*
 *.env
+
+.vscode/
