@@ -53,14 +53,14 @@ class GameObject {
         speedY = 4;
         break;
       case GameObjectType.feather:
-        // Feather floats gently
+        // Feather starts with gentle sideways movement
         speedX = (random.nextDouble() - 0.5) * 3;
-        speedY = -2;
+        speedY = 1; // Start moving down slowly
         break;
       case GameObjectType.yarnBall:
-        // Yarn ball starts with a high bounce
-        speedX = (random.nextDouble() - 0.5) * 5;
-        speedY = -35; // Higher initial jump
+        // Yarn ball starts with a high bounce and good horizontal speed
+        speedX = (random.nextDouble() - 0.5) * 15; // More initial sideways movement
+        speedY = -35;
         break;
     }
   }
@@ -96,10 +96,25 @@ class GameObject {
         speedY = sin(_angle) * 8;
         break;
       case GameObjectType.feather:
-        // Feather floats with gentle swaying
-        speedX = sin(_angle) * 3;
-        speedY = cos(_angle) * 2 - 3;
-        break;
+        // Feather floats down with gentle swaying
+        speedX = sin(_angle) * 2; // Gentle side-to-side movement
+        speedY = 1 + cos(_angle) * 0.5; // Always moving down, but speed varies slightly
+        
+        // Move
+        x += speedX;
+        y += speedY;
+        
+        // Bounce softly off walls
+        if (x < 0 || x > maxX) {
+          speedX = -speedX * 0.5;
+          x = x < 0 ? 0 : maxX;
+        }
+        
+        // Loop back to top when reaching bottom
+        if (y > maxY) {
+          y = 0;
+        }
+        return;
       case GameObjectType.yarnBall:
         // Apply gravity
         speedY += 1.5;
@@ -112,11 +127,13 @@ class GameObject {
         if (y > maxY) {
           y = maxY;
           speedY = -35;  // Fixed bounce height
+          // Add a bit more horizontal movement on each bounce
+          speedX += (random.nextDouble() - 0.5) * 3;
         }
 
-        // Bounce off walls
+        // Bounce off walls with slight speed increase
         if (x < 0 || x > maxX) {
-          speedX = -speedX;
+          speedX = -speedX * 1.1; // Slightly increase speed on wall hits
           x = x < 0 ? 0 : maxX;
         }
         return; // Skip the default movement code for yarn ball
@@ -178,14 +195,14 @@ class GameObject {
         y = random.nextDouble() * 300;
         break;
       case GameObjectType.feather:
-        // Feather floats away gently
-        speedY = -5;
-        speedX = Random().nextDouble() * 4 - 2;
+        // Feather gets a small upward boost when tapped
+        speedY = -2;
+        speedX = (random.nextDouble() - 0.5) * 4;
         break;
       case GameObjectType.yarnBall:
         // Yarn ball bounces back up with spin
-        speedY = -35;  // Same height as natural bounce
-        speedX = (random.nextDouble() - 0.5) * 10;
+        speedY = -35;
+        speedX = (random.nextDouble() - 0.5) * 15; // More sideways momentum on tap
         break;
     }
   }
