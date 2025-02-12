@@ -55,7 +55,34 @@ class GameObject {
 
   void onTouch() {
     lastInteractionAt = DateTime.now();
-    isActive = false; // Object disappears when touched
+    switch (type) {
+      case GameObjectType.mouse:
+        // Mouse scurries away in a random direction
+        final random = Random();
+        speedX = (random.nextDouble() - 0.5) * 20;
+        speedY = (random.nextDouble() - 0.5) * 20;
+        break;
+      case GameObjectType.bug:
+        // Bug gets squished and disappears
+        isActive = false;
+        break;
+      case GameObjectType.laserDot:
+        // Laser dot teleports to a random location
+        final random = Random();
+        x = random.nextDouble() * 300;
+        y = random.nextDouble() * 300;
+        break;
+      case GameObjectType.feather:
+        // Feather floats away gently
+        speedY = -5;
+        speedX = Random().nextDouble() * 4 - 2;
+        break;
+      case GameObjectType.yarnBall:
+        // Yarn ball rolls faster
+        speedX *= 1.5;
+        speedY *= 1.5;
+        break;
+    }
   }
 
   CustomPainter get painter {
@@ -203,25 +230,77 @@ class FeatherPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.orange
+      ..style = PaintingStyle.fill;
+
+    // Create the main feather shape
+    final path = Path();
+    
+    // Start from the top
+    path.moveTo(size.width * 0.2, size.height * 0.2);
+    
+    // Right side of feather
+    path.quadraticBezierTo(
+      size.width * 0.6,
+      size.height * 0.4,
+      size.width * 0.8,
+      size.height * 0.8,
+    );
+    
+    // Bottom curve
+    path.quadraticBezierTo(
+      size.width * 0.75,
+      size.height * 0.85,
+      size.width * 0.7,
+      size.height * 0.8,
+    );
+    
+    // Left side of feather
+    path.quadraticBezierTo(
+      size.width * 0.5,
+      size.height * 0.4,
+      size.width * 0.2,
+      size.height * 0.2,
+    );
+    
+    canvas.drawPath(path, paint);
+
+    // Draw the spine
+    paint
+      ..color = Colors.orange.shade800
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    final path = Path()
-      ..moveTo(size.width * 0.2, size.height * 0.2)
-      ..quadraticBezierTo(
-        size.width * 0.5,
-        size.height * 0.5,
-        size.width * 0.8,
-        size.height * 0.8,
-      );
-
+    path.reset();
+    path.moveTo(size.width * 0.2, size.height * 0.2);
+    path.quadraticBezierTo(
+      size.width * 0.5,
+      size.height * 0.5,
+      size.width * 0.75,
+      size.height * 0.8,
+    );
     canvas.drawPath(path, paint);
 
     // Draw barbs
-    for (var i = 0; i < 10; i++) {
+    paint
+      ..strokeWidth = 1
+      ..color = Colors.orange.shade700;
+
+    for (var i = 0; i < 12; i++) {
+      final t = i / 12;
+      final spineX = size.width * (0.2 + t * 0.55);
+      final spineY = size.height * (0.2 + t * 0.6);
+      
+      // Left barbs
       canvas.drawLine(
-        Offset(size.width * (0.3 + i * 0.05), size.height * (0.3 + i * 0.05)),
-        Offset(size.width * (0.2 + i * 0.05), size.height * (0.2 + i * 0.05)),
+        Offset(spineX, spineY),
+        Offset(spineX - size.width * 0.15, spineY + size.height * 0.05),
+        paint,
+      );
+      
+      // Right barbs
+      canvas.drawLine(
+        Offset(spineX, spineY),
+        Offset(spineX + size.width * 0.15, spineY + size.height * 0.05),
         paint,
       );
     }
