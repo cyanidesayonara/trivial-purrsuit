@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 enum GameObjectType {
   mouse,
-  bug,
   laserDot,
+  bug,
   feather,
   yarnBall,
 }
@@ -16,6 +16,9 @@ class GameObject {
   double speedX;
   double speedY;
   bool isActive;
+  DateTime createdAt;
+  DateTime lastInteractionAt;
+  static const maxLifetimeSeconds = 15; // Random between 10-20 seconds
 
   GameObject({
     required this.type,
@@ -23,63 +26,46 @@ class GameObject {
     required this.y,
     this.speedX = 0,
     this.speedY = 0,
-    this.isActive = true,
-  });
+  }) : isActive = true,
+       createdAt = DateTime.now(),
+       lastInteractionAt = DateTime.now();
 
-  void move(double screenWidth, double screenHeight) {
+  void move(double maxX, double maxY) {
+    // Check if object has expired
+    final now = DateTime.now();
+    final lifetime = now.difference(lastInteractionAt).inSeconds;
+    if (lifetime > maxLifetimeSeconds + Random().nextInt(10)) { // Adds 0-10 seconds randomly
+      isActive = false;
+      return;
+    }
+
     x += speedX;
     y += speedY;
 
-    // Bounce off screen edges
-    if (x <= 0 || x >= screenWidth) {
+    // Bounce off edges
+    if (x <= 0 || x >= maxX) {
       speedX = -speedX;
-      x = x <= 0 ? 0 : screenWidth;
+      x = x <= 0 ? 0 : maxX;
     }
-    if (y <= 0 || y >= screenHeight) {
+    if (y <= 0 || y >= maxY) {
       speedY = -speedY;
-      y = y <= 0 ? 0 : screenHeight;
+      y = y <= 0 ? 0 : maxY;
     }
   }
 
   void onTouch() {
-    switch (type) {
-      case GameObjectType.mouse:
-        // Mouse scurries away in a random direction
-        final random = Random();
-        speedX = (random.nextDouble() - 0.5) * 20;
-        speedY = (random.nextDouble() - 0.5) * 20;
-        break;
-      case GameObjectType.bug:
-        // Bug gets squished and disappears
-        isActive = false;
-        break;
-      case GameObjectType.laserDot:
-        // Laser dot teleports to a random location
-        final random = Random();
-        x = random.nextDouble() * 300;
-        y = random.nextDouble() * 300;
-        break;
-      case GameObjectType.feather:
-        // Feather floats away gently
-        speedY = -5;
-        speedX = Random().nextDouble() * 4 - 2;
-        break;
-      case GameObjectType.yarnBall:
-        // Yarn ball rolls faster
-        speedX *= 1.5;
-        speedY *= 1.5;
-        break;
-    }
+    lastInteractionAt = DateTime.now();
+    isActive = false; // Object disappears when touched
   }
 
   CustomPainter get painter {
     switch (type) {
       case GameObjectType.mouse:
         return MousePainter();
-      case GameObjectType.bug:
-        return BugPainter();
       case GameObjectType.laserDot:
         return LaserDotPainter();
+      case GameObjectType.bug:
+        return BugPainter();
       case GameObjectType.feather:
         return FeatherPainter();
       case GameObjectType.yarnBall:
@@ -99,50 +85,73 @@ class MousePainter extends CustomPainter {
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(size.width * 0.5, size.height * 0.6),
-        width: size.width * 0.7,
-        height: size.height * 0.5,
+        width: size.width * 0.6,
+        height: size.height * 0.4,
       ),
       paint,
     );
 
     // Head
     canvas.drawCircle(
-      Offset(size.width * 0.3, size.height * 0.4),
-      size.width * 0.2,
+      Offset(size.width * 0.3, size.height * 0.5),
+      size.width * 0.15,
       paint,
     );
 
     // Ears
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(size.width * 0.2, size.height * 0.25),
-        width: size.width * 0.2,
-        height: size.height * 0.3,
+        center: Offset(size.width * 0.25, size.height * 0.35),
+        width: size.width * 0.15,
+        height: size.height * 0.2,
       ),
       paint,
     );
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(size.width * 0.4, size.height * 0.25),
-        width: size.width * 0.2,
-        height: size.height * 0.3,
+        center: Offset(size.width * 0.35, size.height * 0.35),
+        width: size.width * 0.15,
+        height: size.height * 0.2,
       ),
       paint,
     );
 
     // Tail
     final tailPath = Path()
-      ..moveTo(size.width * 0.8, size.height * 0.6)
+      ..moveTo(size.width * 0.7, size.height * 0.6)
       ..quadraticBezierTo(
         size.width * 0.9,
-        size.height * 0.4,
-        size.width * 0.95,
         size.height * 0.7,
+        size.width * 0.8,
+        size.height * 0.4,
       );
+
     canvas.drawPath(
       tailPath,
-      paint..strokeWidth = 5..style = PaintingStyle.stroke,
+      paint..strokeWidth = 3..style = PaintingStyle.stroke,
     );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class LaserDotPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+
+    // Glowing dot
+    for (var i = 3; i > 0; i--) {
+      paint.color = Colors.red.withOpacity(0.3 * i);
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2),
+        size.width * 0.2 * i,
+        paint,
+      );
+    }
   }
 
   @override
@@ -159,7 +168,7 @@ class BugPainter extends CustomPainter {
     // Body segments
     canvas.drawCircle(
       Offset(size.width * 0.4, size.height * 0.5),
-      size.width * 0.2,
+      size.width * 0.15,
       paint,
     );
     canvas.drawCircle(
@@ -174,41 +183,15 @@ class BugPainter extends CustomPainter {
     for (var i = 0; i < 3; i++) {
       canvas.drawLine(
         Offset(size.width * 0.4, size.height * 0.5),
-        Offset(size.width * 0.2, size.height * (0.4 + i * 0.2)),
+        Offset(size.width * 0.2, size.height * (0.4 + i * 0.1)),
         paint,
       );
       canvas.drawLine(
-        Offset(size.width * 0.4, size.height * 0.5),
-        Offset(size.width * 0.6, size.height * (0.4 + i * 0.2)),
+        Offset(size.width * 0.6, size.height * 0.5),
+        Offset(size.width * 0.8, size.height * (0.4 + i * 0.1)),
         paint,
       );
     }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class LaserDotPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.red.withOpacity(0.5)
-      ..style = PaintingStyle.fill;
-
-    for (var i = 3; i > 0; i--) {
-      canvas.drawCircle(
-        Offset(size.width / 2, size.height / 2),
-        size.width * 0.3 * i / 3,
-        paint..color = Colors.red.withOpacity(0.3 / i),
-      );
-    }
-
-    canvas.drawCircle(
-      Offset(size.width / 2, size.height / 2),
-      size.width * 0.2,
-      paint..color = Colors.red,
-    );
   }
 
   @override
@@ -223,21 +206,25 @@ class FeatherPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    final path = Path();
-    path.moveTo(size.width * 0.5, size.height * 0.2);
-
-    // Draw feather spine
-    path.lineTo(size.width * 0.5, size.height * 0.8);
-
-    // Draw barbs
-    for (var i = 0.2; i < 0.8; i += 0.1) {
-      path.moveTo(size.width * 0.5, size.height * i);
-      path.lineTo(size.width * 0.3, size.height * (i + 0.1));
-      path.moveTo(size.width * 0.5, size.height * i);
-      path.lineTo(size.width * 0.7, size.height * (i + 0.1));
-    }
+    final path = Path()
+      ..moveTo(size.width * 0.2, size.height * 0.2)
+      ..quadraticBezierTo(
+        size.width * 0.5,
+        size.height * 0.5,
+        size.width * 0.8,
+        size.height * 0.8,
+      );
 
     canvas.drawPath(path, paint);
+
+    // Draw barbs
+    for (var i = 0; i < 10; i++) {
+      canvas.drawLine(
+        Offset(size.width * (0.3 + i * 0.05), size.height * (0.3 + i * 0.05)),
+        Offset(size.width * (0.2 + i * 0.05), size.height * (0.2 + i * 0.05)),
+        paint,
+      );
+    }
   }
 
   @override
@@ -252,33 +239,26 @@ class YarnBallPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    // Draw circular yarn patterns
-    for (var i = 1; i <= 5; i++) {
-      canvas.drawArc(
-        Rect.fromCenter(
-          center: Offset(size.width / 2, size.height / 2),
-          width: size.width * 0.8 * i / 5,
-          height: size.height * 0.8 * i / 5,
-        ),
-        0,
-        3.14 * 2,
-        false,
+    // Draw circular patterns
+    for (var i = 0; i < 5; i++) {
+      canvas.drawCircle(
+        Offset(size.width * 0.5, size.height * 0.5),
+        size.width * (0.1 + i * 0.1),
         paint,
       );
     }
 
-    // Add some random yarn strands
-    final path = Path();
-    for (var i = 0; i < 5; i++) {
-      path.moveTo(size.width * 0.3, size.height * (0.3 + i * 0.1));
-      path.quadraticBezierTo(
-        size.width * 0.5,
-        size.height * (0.2 + i * 0.1),
-        size.width * 0.7,
-        size.height * (0.3 + i * 0.1),
-      );
-    }
-    canvas.drawPath(path, paint);
+    // Draw loose strands
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.2),
+      Offset(size.width * 0.7, size.height * 0.1),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.8),
+      Offset(size.width * 0.3, size.height * 0.9),
+      paint,
+    );
   }
 
   @override
