@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math';
-import 'models/game_object.dart';
-import 'widgets/game_object_widget.dart';
+import 'screens/game_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  runApp(const TrivialPurrsuit());
+  // Set preferred orientations to portrait only
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  // Set full screen
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersive,
+    overlays: [],
+  );
+  runApp(const MyApp());
 }
 
-class TrivialPurrsuit extends StatelessWidget {
-  const TrivialPurrsuit({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Trivial Purrsuit',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
+        useMaterial3: true,
       ),
       home: const GameScreen(),
     );
