@@ -58,14 +58,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # Add game object images
-  assets:
-    - assets/images/mouse.png
-    - assets/images/laser_dot.png
-    - assets/images/bug.png
-    - assets/images/feather.png
-    - assets/images/yarn_ball.png
-
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
   # "family" key with the font family name, and a "fonts" key with a
