@@ -24,6 +24,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   static const maxObjects = 2; // Limit to 2 objects at a time
   final FeedbackService _feedback = FeedbackService();
   bool _isInitialized = false;
+  GameObjectType? _lastSpawnedType;  // Track the last spawned object type
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     gameObjects.clear();
     gameTimer?.cancel();
     spawnTimer?.cancel();
+    _lastSpawnedType = null;  // Reset the last spawned type
 
     // Add initial game object
     addRandomGameObject();
@@ -101,7 +103,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void addRandomGameObject() {
     if (screenSize == null) return;
 
-    final type = GameObjectType.values[random.nextInt(GameObjectType.values.length)];
+    // Get a random type that's different from the last one
+    GameObjectType type;
+    do {
+      type = GameObjectType.values[random.nextInt(GameObjectType.values.length)];
+    } while (type == _lastSpawnedType && GameObjectType.values.length > 1);
+    
+    _lastSpawnedType = type;  // Update the last spawned type
     
     // Get the object size to properly calculate boundaries
     double objectSize;
