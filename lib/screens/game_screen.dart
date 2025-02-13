@@ -26,6 +26,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   final FeedbackService _feedback = FeedbackService();
   bool _isInitialized = false;
   GameObjectType? _lastSpawnedType;  // Track the last spawned object type
+  bool _isPaused = false;
 
   @override
   void initState() {
@@ -35,6 +36,26 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeGame();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    gameTimer?.cancel();
+    spawnTimer?.cancel();
+    _feedback.dispose();
+    // Reset orientation settings
+    SystemChrome.setPreferredOrientations([]);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _pauseGame();
+    } else if (state == AppLifecycleState.resumed) {
+      _resumeGame();
+    }
   }
 
   Future<void> _initializeGame() async {
@@ -101,7 +122,20 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     );
   }
 
+  void _pauseGame() {
+    _isPaused = true;
+    gameTimer?.cancel();
+    spawnTimer?.cancel();
+  }
+
+  void _resumeGame() {
+    _isPaused = false;
+    startGame();
+  }
+
   void addRandomGameObject() {
+    if (_isPaused) return;
+
     if (screenSize == null) return;
 
     // Get a random type that's not currently in play
@@ -162,6 +196,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void updateGameObjects() {
+    if (_isPaused) return;
+
     if (screenSize == null) return;
 
     setState(() {
@@ -214,17 +250,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         addRandomGameObject();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    gameTimer?.cancel();
-    spawnTimer?.cancel();
-    _feedback.dispose();
-    // Reset orientation settings
-    SystemChrome.setPreferredOrientations([]);
-    super.dispose();
   }
 
   @override
